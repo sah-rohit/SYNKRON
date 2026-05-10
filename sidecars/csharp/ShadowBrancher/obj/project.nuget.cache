@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "3I8IXBs4btw=",
+  "success": true,
+  "projectFilePath": "D:\\SYNKRON\\sidecars\\csharp\\ShadowBrancher\\ShadowBrancher.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Rohit\\.nuget\\packages\\libgit2sharp\\0.31.0\\libgit2sharp.0.31.0.nupkg.sha512",
+    "C:\\Users\\Rohit\\.nuget\\packages\\libgit2sharp.nativebinaries\\2.0.323\\libgit2sharp.nativebinaries.2.0.323.nupkg.sha512"
+  ],
+  "logs": []
+}
