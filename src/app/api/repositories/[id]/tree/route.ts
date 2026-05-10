@@ -29,7 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
   } else {
     // @ts-ignore
-    const memRepos = globalThis.__ostinato_repos?.get(user.userId) || [];
+    const memRepos = globalThis.__synkron_repos?.get(user.userId) || [];
     const repo = memRepos.find((r: any) => r.id === id);
     if (!repo) return NextResponse.json({ success: false, error: 'Repository not found' }, { status: 404 });
     repoFullName = repo.fullName;
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const headers: Record<string, string> = {
       'Accept': 'application/vnd.github+json',
-      'User-Agent': 'Ostinato-App',
+      'User-Agent': 'SYNKRON-App',
     };
     // Use auth token if available to prevent rate limits
     if (process.env.GITHUB_CLIENT_SECRET) {

@@ -61,7 +61,7 @@ import {
   Send
 } from 'lucide-react';
 
-// Custom SVG Logo Component representing code brackets + continuous musical ostinato wave
+// Custom SVG Logo Component representing code brackets + continuous musical synkron wave
 // Custom SVG Logo Component representing minimal synchronized code nodes (SYNKRON)
 const SynkronLogo = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -462,14 +462,14 @@ Establishes connection pool with the PostgreSQL server.
 
   // Load saved theme from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('ostinato-theme');
+    const saved = localStorage.getItem('synkron-theme');
     if (saved === 'light') setTheme('light');
   }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    localStorage.setItem('ostinato-theme', newTheme);
+    localStorage.setItem('synkron-theme', newTheme);
     triggerAlert('info', 'Theme Changed', `Switched to ${newTheme} mode.`);
   };
 
@@ -577,7 +577,7 @@ Establishes connection pool with the PostgreSQL server.
       const a = document.createElement('a');
       a.href = url;
       const ext = format === 'markdown' ? 'zip' : format === 'html' ? 'html' : 'json';
-      a.download = `ostinato-docs.${ext}`;
+      a.download = `synkron-docs.${ext}`;
       a.click();
       URL.revokeObjectURL(url);
       triggerAlert('success', 'Export Complete', `Documentation exported as ${format.toUpperCase()}.`);

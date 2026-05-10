@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ostinato — The Self-Healing AI Documentation Engine",
-  description: "Ostinato automatically generates a Bento-grid style documentation site from your repository, using AI to detect code changes via webhooks and self-heal your docs in real-time. Built by Sonata Interactive.",
+  title: "SYNKRON — The Self-Healing AI Documentation Engine",
+  description: "SYNKRON automatically generates a Bento-grid style documentation site from your repository, using AI to detect code changes via webhooks and self-heal your docs in real-time. Built by Sonata Interactive.",
 };
 
 export default function RootLayout({

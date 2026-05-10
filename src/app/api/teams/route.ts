@@ -8,9 +8,9 @@ import { getAuthUser } from '@/lib/auth/unified';
 
 declare global {
   // eslint-disable-next-line no-var
-  var __ostinato_teams: Map<string, any[]> | undefined;
+  var __synkron_teams: Map<string, any[]> | undefined;
 }
-const memTeams: Map<string, any[]> = (globalThis.__ostinato_teams ??= new Map());
+const memTeams: Map<string, any[]> = (globalThis.__synkron_teams ??= new Map());
 
 function memGetTeams(userId: string) { return memTeams.get(userId) ?? []; }
 function memAddTeam(userId: string, team: any) {

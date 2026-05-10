@@ -1,5 +1,5 @@
 /**
- * Ostinato Self-Healing API
+ * SYNKRON Self-Healing API
  * POST /api/heal
  * Checks weekly AI quota before calling AI.
  */

@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
-  const repoName = body.repoName || 'ostinato-user/test-repo';
+  const repoName = body.repoName || 'synkron-user/test-repo';
   const branch = body.branch || 'main';
   const commitMessage = body.commitMessage || 'test: automated ping from dashboard';
   const filename = body.filename || 'src/auth/session.ts';
@@ -22,12 +22,12 @@ export async function POST(req: NextRequest) {
       name: repoName.split('/').pop(),
       html_url: `https://github.com/${repoName}`,
     },
-    pusher: { name: 'ostinato-test-bot', email: 'bot@ostinato.dev' },
+    pusher: { name: 'synkron-test-bot', email: 'bot@synkron.dev' },
     head_commit: {
       id: crypto.randomUUID().replace(/-/g, '').slice(0, 40),
       message: commitMessage,
       timestamp: new Date().toISOString(),
-      author: { username: 'ostinato-test-bot', email: 'bot@ostinato.dev' },
+      author: { username: 'synkron-test-bot', email: 'bot@synkron.dev' },
       modified: [filename],
       added: [],
       removed: [],
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       {
         id: crypto.randomUUID().replace(/-/g, '').slice(0, 40),
         message: commitMessage,
-        author: { username: 'ostinato-test-bot' },
+        author: { username: 'synkron-test-bot' },
         modified: [filename],
         added: [],
         removed: [],

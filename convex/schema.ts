@@ -12,7 +12,7 @@ export default defineSchema({
     phone: v.optional(v.string()),
     phoneVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
-    // Added for Ostinato:
+    // Added for SYNKRON:
     plan: v.optional(v.string()),
     username: v.optional(v.string()),
     passwordHash: v.optional(v.string()),

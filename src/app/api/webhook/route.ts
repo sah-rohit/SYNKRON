@@ -1,5 +1,5 @@
 /**
- * Ostinato GitHub Webhook Handler
+ * SYNKRON GitHub Webhook Handler
  * POST /api/webhook
  *
  * Receives GitHub push events, validates the HMAC-SHA256 signature,

@@ -26,16 +26,16 @@ function LocalTrackingFallback() {
   const [logs, setLogs] = useState<LocalLog[]>([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('ostinato_local_logs');
+    const saved = localStorage.getItem('synkron_local_logs');
     if (saved) {
       setLogs(JSON.parse(saved));
     } else {
       const initialLogs = [
         { action: "fallback_offline_audit_active", _creationTime: Date.now() - 5000, ipAddress: "127.0.0.1", deviceInfo: navigator.userAgent },
-        { action: "convex_sync_uninitialized", _creationTime: Date.now() - 15000, ipAddress: "127.0.0.1", deviceInfo: "Ostinato Sandbox" }
+        { action: "convex_sync_uninitialized", _creationTime: Date.now() - 15000, ipAddress: "127.0.0.1", deviceInfo: "SYNKRON Sandbox" }
       ];
       setLogs(initialLogs);
-      localStorage.setItem('ostinato_local_logs', JSON.stringify(initialLogs));
+      localStorage.setItem('synkron_local_logs', JSON.stringify(initialLogs));
     }
   }, []);
 
@@ -48,7 +48,7 @@ function LocalTrackingFallback() {
     };
     const updated = [newLog, ...logs].slice(0, 50);
     setLogs(updated);
-    localStorage.setItem('ostinato_local_logs', JSON.stringify(updated));
+    localStorage.setItem('synkron_local_logs', JSON.stringify(updated));
   };
 
   return (

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     branch = repos[0].branch;
   } else {
     // @ts-ignore
-    const memRepos = globalThis.__ostinato_repos?.get(user.userId) || [];
+    const memRepos = globalThis.__synkron_repos?.get(user.userId) || [];
     const repo = memRepos.find((r: any) => r.id === id);
     if (!repo) return NextResponse.json({ success: false, error: 'Repository not found' }, { status: 404 });
     repoFullName = repo.fullName;
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const headers: Record<string, string> = {
       'Accept': 'application/vnd.github+json',
-      'User-Agent': 'Ostinato-App',
+      'User-Agent': 'SYNKRON-App',
       'Authorization': `Bearer ${tokenToUse}`
     };
 
@@ -125,7 +125,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     branch = repos[0].branch;
   } else {
     // @ts-ignore
-    const memRepos = globalThis.__ostinato_repos?.get(user.userId) || [];
+    const memRepos = globalThis.__synkron_repos?.get(user.userId) || [];
     const repo = memRepos.find((r: any) => r.id === id);
     if (!repo) return NextResponse.json({ success: false, error: 'Repository not found' }, { status: 404 });
     repoFullName = repo.fullName;
@@ -138,7 +138,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     const headers: Record<string, string> = {
       'Accept': 'application/vnd.github+json',
-      'User-Agent': 'Ostinato-App',
+      'User-Agent': 'SYNKRON-App',
       'Authorization': `Bearer ${tokenToUse}`
     };
 

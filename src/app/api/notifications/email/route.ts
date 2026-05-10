@@ -34,7 +34,7 @@ function buildEmailHtml(type: string, data: Record<string, any> = {}): string {
   if (type === 'heal_complete') {
     return `<html><head><style>${baseStyle}</style></head><body>
       <div class="container">
-        <div class="header"><div class="logo">Ostinato</div></div>
+        <div class="header"><div class="logo">SYNKRON</div></div>
         <h1>Documentation Healed Successfully</h1>
         <span class="badge badge-success">HEAL COMPLETE</span>
         <div class="detail-card">
@@ -44,7 +44,7 @@ function buildEmailHtml(type: string, data: Record<string, any> = {}): string {
           <p><strong>Trigger:</strong> ${data.triggerType || 'manual'}</p>
         </div>
         <p>Your documentation has been automatically reconciled with the latest code changes.</p>
-        <div class="footer">Ostinato Self-Healing Documentation Engine • Sonata Interactive</div>
+        <div class="footer">SYNKRON Self-Healing Documentation Engine • Sonata Interactive</div>
       </div>
     </body></html>`;
   }
@@ -52,7 +52,7 @@ function buildEmailHtml(type: string, data: Record<string, any> = {}): string {
   if (type === 'security_alert') {
     return `<html><head><style>${baseStyle}</style></head><body>
       <div class="container">
-        <div class="header"><div class="logo">Ostinato</div></div>
+        <div class="header"><div class="logo">SYNKRON</div></div>
         <h1>Security Scan Alert</h1>
         <span class="badge badge-critical">CRITICAL FINDINGS</span>
         <div class="detail-card">
@@ -61,7 +61,7 @@ function buildEmailHtml(type: string, data: Record<string, any> = {}): string {
           <p><strong>Scan Path:</strong> ${data.scanPath || 'src/'}</p>
         </div>
         <p>Your latest security scan found issues that require immediate attention.</p>
-        <div class="footer">Ostinato Self-Healing Documentation Engine • Sonata Interactive</div>
+        <div class="footer">SYNKRON Self-Healing Documentation Engine • Sonata Interactive</div>
       </div>
     </body></html>`;
   }
@@ -69,7 +69,7 @@ function buildEmailHtml(type: string, data: Record<string, any> = {}): string {
   if (type === 'stale_docs') {
     return `<html><head><style>${baseStyle}</style></head><body>
       <div class="container">
-        <div class="header"><div class="logo">Ostinato</div></div>
+        <div class="header"><div class="logo">SYNKRON</div></div>
         <h1>Stale Documentation Alert</h1>
         <span class="badge badge-warning">STALE DOCS DETECTED</span>
         <div class="detail-card">
@@ -78,7 +78,7 @@ function buildEmailHtml(type: string, data: Record<string, any> = {}): string {
           <p><strong>Days Since Heal:</strong> ${data.daysSinceHeal || '?'}</p>
         </div>
         <p>Some documentation files haven't been healed recently and may be out of sync with the code.</p>
-        <div class="footer">Ostinato Self-Healing Documentation Engine • Sonata Interactive</div>
+        <div class="footer">SYNKRON Self-Healing Documentation Engine • Sonata Interactive</div>
       </div>
     </body></html>`;
   }
@@ -86,10 +86,10 @@ function buildEmailHtml(type: string, data: Record<string, any> = {}): string {
   // Custom/default
   return `<html><head><style>${baseStyle}</style></head><body>
     <div class="container">
-      <div class="header"><div class="logo">Ostinato</div></div>
+      <div class="header"><div class="logo">SYNKRON</div></div>
       <h1>${data.title || 'Notification'}</h1>
-      <p>${data.body || 'You have a new notification from Ostinato.'}</p>
-      <div class="footer">Ostinato Self-Healing Documentation Engine • Sonata Interactive</div>
+      <p>${data.body || 'You have a new notification from SYNKRON.'}</p>
+      <div class="footer">SYNKRON Self-Healing Documentation Engine • Sonata Interactive</div>
     </div>
   </body></html>`;
 }
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
   const smtpPort = process.env.SMTP_PORT;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
-  const smtpFrom = process.env.SMTP_FROM || 'Ostinato <noreply@ostinato.dev>';
+  const smtpFrom = process.env.SMTP_FROM || 'SYNKRON <noreply@synkron.dev>';
 
   if (!smtpHost) {
     // Return success with a note that email wasn't actually sent

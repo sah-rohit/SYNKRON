@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Ostinato Enterprise High-Speed Static Code Miner
+SYNKRON Enterprise High-Speed Static Code Miner
 Parses Python, Rust, C/C++, and JavaScript/TypeScript files at native speeds.
 Extracts deep AST structures, functions, classes, and comments for documentation sync.
 """

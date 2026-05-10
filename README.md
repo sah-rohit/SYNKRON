@@ -1,6 +1,6 @@
-# Ostinato — Self-Healing AI Documentation Engine
+# SYNKRON — Self-Healing AI Documentation Engine
 
-Ostinato treats documentation as a dynamic reflection of source code. When a developer pushes a change, Ostinato detects the diff via GitHub Webhooks, uses AI to reason through the *intent* of the change, and automatically updates the documentation.
+SYNKRON treats documentation as a dynamic reflection of source code. When a developer pushes a change, SYNKRON detects the diff via GitHub Webhooks, uses AI to reason through the *intent* of the change, and automatically updates the documentation.
 
 ## Features
 

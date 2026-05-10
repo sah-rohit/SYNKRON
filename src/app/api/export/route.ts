@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   if (format === 'markdown') {
     // Create a ZIP file of all markdown docs
     const zip = new JSZip();
-    const docsFolder = zip.folder('ostinato-docs')!;
+    const docsFolder = zip.folder('synkron-docs')!;
 
     docs.forEach((doc) => {
       const safePath = doc.filePath.replace(/[^a-zA-Z0-9_\-./]/g, '_');
@@ -57,14 +57,14 @@ export async function POST(req: NextRequest) {
     });
 
     // Add an index file
-    const index = `# Ostinato Documentation Export\n\nExported at: ${new Date().toISOString()}\n\n## Files\n\n${docs.map(d => `- [${d.filePath}](./${d.filePath.replace(/[^a-zA-Z0-9_\-./]/g, '_')}.md)`).join('\n')}\n`;
+    const index = `# SYNKRON Documentation Export\n\nExported at: ${new Date().toISOString()}\n\n## Files\n\n${docs.map(d => `- [${d.filePath}](./${d.filePath.replace(/[^a-zA-Z0-9_\-./]/g, '_')}.md)`).join('\n')}\n`;
     docsFolder.file('README.md', index);
 
     const zipBuffer = await zip.generateAsync({ type: 'uint8array' });
     return new NextResponse(Buffer.from(zipBuffer), {
       headers: {
         'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="ostinato-docs-${Date.now()}.zip"`,
+        'Content-Disposition': `attachment; filename="synkron-docs-${Date.now()}.zip"`,
       },
     });
   }
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     return new NextResponse(htmlContent, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `attachment; filename="ostinato-docs-${Date.now()}.html"`,
+        'Content-Disposition': `attachment; filename="synkron-docs-${Date.now()}.html"`,
       },
     });
   }
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     return new NextResponse(jsonContent, {
       headers: {
         'Content-Type': 'application/json',
-        'Content-Disposition': `attachment; filename="ostinato-docs-${Date.now()}.json"`,
+        'Content-Disposition': `attachment; filename="synkron-docs-${Date.now()}.json"`,
       },
     });
   }
@@ -124,7 +124,7 @@ function generateHtmlSite(docs: Array<{ filePath: string; markdown: string }>): 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ostinato Documentation Export</title>
+  <title>SYNKRON Documentation Export</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0f; color: #e4e4e7; display: flex; min-height: 100vh; }
@@ -151,12 +151,12 @@ function generateHtmlSite(docs: Array<{ filePath: string; markdown: string }>): 
 </head>
 <body>
   <nav class="sidebar">
-    <h2>Ostinato Docs</h2>
+    <h2>SYNKRON Docs</h2>
     ${sidebar}
   </nav>
   <main class="main">
     <div class="export-header">
-      <h1>Ostinato Documentation</h1>
+      <h1>SYNKRON Documentation</h1>
       <p>Exported ${new Date().toLocaleString()} • ${docs.length} file(s)</p>
     </div>
     ${content}

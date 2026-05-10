@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Build the Ostinato file integrity hasher (C program)
+# Build the SYNKRON file integrity hasher (C program)
 # Run: bash scripts/build_hasher.sh
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUT="$SCRIPT_DIR/hasher"
 
-echo "Building Ostinato hasher..."
+echo "Building SYNKRON hasher..."
 
 # Try standard Linux build first
 if gcc -O2 -o "$OUT" "$SCRIPT_DIR/hasher.c" -lssl -lcrypto 2>/dev/null; then

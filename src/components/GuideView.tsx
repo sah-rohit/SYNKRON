@@ -13,10 +13,10 @@ export default function GuideView({ navigateBack }: { navigateBack: () => void }
         <div className="absolute right-0 top-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl" />
         <span className="text-[9px] text-purple-400 font-bold uppercase tracking-wider">[ENTERPRISE GUIDE]</span>
         <h1 className="text-3xl font-extrabold text-white uppercase tracking-tight flex items-center gap-2">
-          <BookOpen className="w-7 h-7 text-purple-500" /> Ostinato Architecture
+          <BookOpen className="w-7 h-7 text-purple-500" /> SYNKRON Architecture
         </h1>
         <p className="text-xs text-zinc-500 font-sans max-w-xl">
-          Deep-dive into the self-healing mechanics, automated code audits, real-time sync systems, and offline resilience of Ostinato.
+          Deep-dive into the self-healing mechanics, automated code audits, real-time sync systems, and offline resilience of SYNKRON.
         </p>
       </div>
 
@@ -31,7 +31,7 @@ export default function GuideView({ navigateBack }: { navigateBack: () => void }
               <GitBranch className="w-4 h-4 text-purple-400" /> Continuous Tree & Sync
             </h3>
             <p className="text-[11px] text-zinc-400 font-sans leading-relaxed">
-              Ostinato connects live with the GitHub API. It scans directories recursively, dynamically detects branches (`main` vs `master` fallback), and streams raw content securely. When saving edits, it resolves file SHAs, converts assets to Base64, and commits changes directly back to your branch.
+              SYNKRON connects live with the GitHub API. It scans directories recursively, dynamically detects branches (`main` vs `master` fallback), and streams raw content securely. When saving edits, it resolves file SHAs, converts assets to Base64, and commits changes directly back to your branch.
             </p>
           </div>
           <div className="bg-zinc-900/50 p-3 rounded border border-zinc-800/80 font-sans text-[10px] text-zinc-500">
@@ -47,7 +47,7 @@ export default function GuideView({ navigateBack }: { navigateBack: () => void }
               <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" /> Self-Healing Docs
             </h3>
             <p className="text-[11px] text-zinc-400 font-sans leading-relaxed">
-              When code updates or doc stales are detected, Ostinato routes files to our Llama-3/Groq AI engine. The AI performs an AST structure analysis, finds outdated signatures, and automatically generates modern Markdown. These docs are committed instantly to save developer maintenance costs.
+              When code updates or doc stales are detected, SYNKRON routes files to our Llama-3/Groq AI engine. The AI performs an AST structure analysis, finds outdated signatures, and automatically generates modern Markdown. These docs are committed instantly to save developer maintenance costs.
             </p>
           </div>
           <div className="bg-zinc-900/50 p-3 rounded border border-zinc-800/80 font-sans text-[10px] text-zinc-500">
@@ -79,7 +79,7 @@ export default function GuideView({ navigateBack }: { navigateBack: () => void }
               <Database className="w-4 h-4 text-cyan-400" /> Hybrid Sync & Failover
             </h3>
             <p className="text-[11px] text-zinc-400 font-sans leading-relaxed">
-              Ostinato uses Drizzle & Neon Postgres for workspace tables, and Convex for account activity logs. If databases are offline, the app switches to an active **LocalStorage/In-Memory fallback**, persisting security logs and team configs directly in the sandbox without breaking.
+              SYNKRON uses Drizzle & Neon Postgres for workspace tables, and Convex for account activity logs. If databases are offline, the app switches to an active **LocalStorage/In-Memory fallback**, persisting security logs and team configs directly in the sandbox without breaking.
             </p>
           </div>
           <div className="bg-zinc-900/50 p-3 rounded border border-zinc-800/80 font-sans text-[10px] text-zinc-500">
