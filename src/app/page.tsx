@@ -481,24 +481,25 @@ Establishes connection pool with the PostgreSQL server.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('auth_success') === 'true') {
-      const ghUser = params.get('gh_user') || '';
-      const ghName = params.get('gh_name') || '';
-      const ghEmail = params.get('gh_email') || '';
-      const ghAvatar = params.get('gh_avatar') || '';
-      const ghId = params.get('gh_id') || '';
-
-      setIsLoggedIn(true);
-      setUserId(ghId);
-      setUsername(ghUser);
-      setFullName(ghName);
-      setUserEmail(ghEmail);
-      if (ghAvatar) setProfilePicUrl(ghAvatar);
-      setSessions([{ id: 'current', device: 'GitHub OAuth', location: 'GitHub', time: 'Active now', isCurrent: true }]);
-
-      // Clean URL
+      // Clean URL first — session cookie is already set by the server
       window.history.replaceState({}, '', '/');
-      navigateTo('dashboard');
-      triggerAlert('success', 'GitHub Connected', `Authenticated as @${ghUser} via GitHub OAuth.`);
+      // Fetch profile securely from /api/auth/me
+      fetch('/api/auth/me')
+        .then(r => r.json())
+        .then(data => {
+          if (data.success && data.user) {
+            setIsLoggedIn(true);
+            setUserId(data.user.id);
+            setUsername(data.user.username);
+            setFullName(data.user.fullName);
+            setUserEmail(data.user.email);
+            if (data.user.avatarUrl) setProfilePicUrl(data.user.avatarUrl);
+            setSessions([{ id: 'current', device: 'GitHub OAuth', location: 'GitHub', time: 'Active now', isCurrent: true }]);
+            navigateTo('dashboard');
+            triggerAlert('success', 'GitHub Connected', `Authenticated as @${data.user.username} via GitHub OAuth.`);
+          }
+        })
+        .catch(() => triggerAlert('error', 'Auth Error', 'Failed to load profile after GitHub login.'));
     }
 
     const authError = params.get('auth_error');
@@ -1210,26 +1211,35 @@ Establishes connection pool with the PostgreSQL server.
         </div>
       )}
 
-      {/* ================= CUSTOM ALERTS NOTIFICATION CENTER ================= */}
-      <div className="fixed top-24 right-6 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
-        {alerts.map(alert => (
-          <div
-            key={alert.id}
-            className="pointer-events-auto p-3 flex items-start gap-3 bg-zinc-950 border border-zinc-800 rounded shadow-xl animate-in slide-in-from-right-12 duration-200"
-            style={{ borderLeft: alert.type === 'success' ? '3px solid #10b981' : alert.type === 'warning' ? '3px solid #f59e0b' : alert.type === 'error' ? '3px solid #f43f5e' : '3px solid #a855f7' }}
-          >
-            <div className="flex-1 flex flex-col gap-0.5">
-              <span className="text-[10px] font-bold text-zinc-400 font-mono uppercase">{alert.title}</span>
-              <p className="text-[11px] text-zinc-300 leading-normal font-sans">{alert.message}</p>
-            </div>
-            <button
-              onClick={() => setAlerts(prev => prev.filter(a => a.id !== alert.id))}
-              className="text-zinc-600 hover:text-white transition-colors"
+      {/* ================= SYNKRON NOTIFICATION TOASTS ================= */}
+      <div className="fixed top-20 right-4 z-[9999] flex flex-col gap-2 w-80 pointer-events-none">
+        {alerts.map(alert => {
+          const cfg = {
+            success: { bar: '#10b981', icon: <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />, label: 'text-emerald-400', bg: 'bg-emerald-500/5 border-emerald-500/20' },
+            warning: { bar: '#f59e0b', icon: <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />, label: 'text-amber-400', bg: 'bg-amber-500/5 border-amber-500/20' },
+            error:   { bar: '#f43f5e', icon: <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />, label: 'text-rose-400', bg: 'bg-rose-500/5 border-rose-500/20' },
+            info:    { bar: '#a855f7', icon: <Info className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />, label: 'text-purple-400', bg: 'bg-purple-500/5 border-purple-500/20' },
+          }[alert.type];
+          return (
+            <div
+              key={alert.id}
+              className={`pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-lg border ${cfg.bg} backdrop-blur-sm shadow-2xl shadow-black/40 animate-in slide-in-from-right-8 fade-in duration-300`}
+              style={{ borderLeftWidth: '3px', borderLeftColor: cfg.bar }}
             >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        ))}
+              {cfg.icon}
+              <div className="flex-1 min-w-0">
+                <p className={`text-[10px] font-bold font-mono uppercase tracking-wider ${cfg.label}`}>{alert.title}</p>
+                <p className="text-[11px] text-zinc-300 font-sans leading-snug mt-0.5 break-words">{alert.message}</p>
+              </div>
+              <button
+                onClick={() => setAlerts(prev => prev.filter(a => a.id !== alert.id))}
+                className="text-zinc-600 hover:text-zinc-300 transition-colors shrink-0 mt-0.5"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {/* ================= FLOATING NAV PILL ================= */}
@@ -2397,52 +2407,78 @@ Establishes connection pool with the PostgreSQL server.
                     </button>
                   </div>
 
-                  {/* Glassmorphic Consequence Deletion Modal */}
+                  {/* SYNKRON Account Deletion Confirmation Modal */}
                   {isDeleteModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                      <div className="bg-[#0c0c0e] border border-rose-900/50 p-6 rounded shadow-2xl max-w-md w-full flex flex-col gap-5 font-mono text-xs">
-                        <div className="flex items-center gap-2 border-b border-rose-950 pb-3">
-                          <AlertTriangle className="w-5 h-5 text-rose-500 animate-pulse" />
-                          <span className="text-sm font-bold text-rose-400 uppercase">Critical Consequences Notice</span>
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
+                      <div className="bg-[#0a0a0f] border border-rose-900/40 rounded-xl shadow-2xl shadow-rose-950/30 max-w-md w-full flex flex-col overflow-hidden">
+                        {/* Header bar */}
+                        <div className="flex items-center gap-3 px-5 py-4 border-b border-rose-900/30 bg-rose-950/10">
+                          <div className="w-8 h-8 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shrink-0">
+                            <AlertTriangle className="w-4 h-4 text-rose-400" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-rose-300 font-mono uppercase tracking-wider">Permanent Account Deletion</p>
+                            <p className="text-[9px] text-rose-500/70 font-mono">[WARNING_PROTOCOL_ACTIVATED]</p>
+                          </div>
                         </div>
 
-                        <div className="flex flex-col gap-3 text-zinc-300 leading-relaxed font-sans text-xs">
-                          <p className="font-mono text-[10px] text-zinc-500 uppercase">[WARNING_PROTOCOL_ACTIVATED]</p>
-                          <p>
-                            You are about to initiate the permanent termination sequence for account <strong className="text-white">@{username}</strong>. Proceeding will result in the following immediate consequences:
+                        <div className="p-5 flex flex-col gap-4">
+                          <p className="text-[11px] text-zinc-300 font-sans leading-relaxed">
+                            You are about to permanently delete <span className="text-white font-bold font-mono">@{username}</span>. This will immediately:
                           </p>
-                          <ul className="list-disc pl-5 flex flex-col gap-1.5 text-zinc-400">
-                            <li>All connected repository webhook routers will be severed.</li>
-                            <li>Your secure Convex Cloud credentials and synchronized tables will be wiped.</li>
-                            <li>All active login sessions on all devices will be forcefully revoked.</li>
-                            <li>The custom SVG logo configurations and active AST caches will be permanently deleted.</li>
-                          </ul>
-                        </div>
-
-                        <div className="p-3 bg-rose-950/25 border border-rose-900/30 rounded text-rose-400 text-[10px] leading-normal font-sans">
-                          <strong>IMPORTANT:</strong> This action is absolute, instantaneous, and completely irreversible. We cannot recover your metadata once purged.
-                        </div>
-
-                        <div className="flex flex-col gap-2.5 border-t border-zinc-900 pt-4 font-mono">
-                          <div className="flex justify-between items-center text-[10px] text-zinc-500 mb-1">
-                            <span>UNLOCKED STAGE TRIGGER:</span>
-                            <span>{isDeleteButtonUnlocked ? 'READY TO INITIATE' : `LOCK RELEASING IN ${deleteTimer}s`}</span>
+                          <div className="flex flex-col gap-2">
+                            {[
+                              'Sever all connected repository webhook routers',
+                              'Wipe all session tokens across every device',
+                              'Delete all heal history, doc files, and AST caches',
+                              'Remove all team memberships and access tokens',
+                            ].map((item, i) => (
+                              <div key={i} className="flex items-start gap-2 text-[10px] text-zinc-400 font-sans">
+                                <span className="text-rose-500 font-mono shrink-0 mt-0.5">✕</span>
+                                {item}
+                              </div>
+                            ))}
                           </div>
 
-                          <div className="flex gap-3">
+                          <div className="p-3 bg-rose-950/20 border border-rose-900/30 rounded-lg">
+                            <p className="text-[10px] text-rose-400 font-sans leading-relaxed">
+                              <span className="font-bold font-mono">IRREVERSIBLE.</span> This cannot be undone. There is no recovery path.
+                            </p>
+                          </div>
+
+                          {/* Countdown progress */}
+                          {!isDeleteButtonUnlocked && (
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex justify-between text-[9px] text-zinc-500 font-mono">
+                                <span>SAFETY LOCK</span>
+                                <span>RELEASES IN {deleteTimer}s</span>
+                              </div>
+                              <div className="w-full h-1 bg-zinc-900 rounded overflow-hidden">
+                                <div
+                                  className="h-full bg-rose-600 transition-all duration-1000"
+                                  style={{ width: `${((5 - deleteTimer) / 5) * 100}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex gap-3 pt-1">
                             <button
                               onClick={handleCancelDeleteAccount}
-                              className="flex-1 py-2 bg-zinc-900 border border-zinc-800 text-zinc-350 hover:text-white font-bold uppercase text-[10px] cursor-pointer"
+                              className="flex-1 py-2.5 bg-zinc-900 border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white font-bold text-[10px] uppercase font-mono transition-colors cursor-pointer rounded-lg"
                             >
-                              Cancel Sequence
+                              Cancel
                             </button>
-
                             <button
                               onClick={handleConfirmDeletePermanently}
                               disabled={!isDeleteButtonUnlocked}
-                              className={`flex-1 py-2 font-bold uppercase text-[10px] transition-all rounded ${isDeleteButtonUnlocked ? 'bg-rose-600 hover:bg-rose-500 text-white border border-rose-500 cursor-pointer animate-pulse' : 'bg-rose-950/25 text-rose-800 border border-rose-950/40 cursor-not-allowed'}`}
+                              className={`flex-1 py-2.5 font-bold text-[10px] uppercase font-mono transition-all rounded-lg ${
+                                isDeleteButtonUnlocked
+                                  ? 'bg-rose-600 hover:bg-rose-500 text-white border border-rose-500 cursor-pointer'
+                                  : 'bg-zinc-900 text-zinc-600 border border-zinc-800 cursor-not-allowed'
+                              }`}
                             >
-                              {isDeleteButtonUnlocked ? 'Permanently Delete' : `Unlocks in ${deleteTimer}s`}
+                              {isDeleteButtonUnlocked ? '⚠ Delete Forever' : `Locked (${deleteTimer}s)`}
                             </button>
                           </div>
                         </div>
@@ -2568,98 +2604,406 @@ Establishes connection pool with the PostgreSQL server.
 
           {/* ================= ABOUT ENGINE VIEW ================= */}
           {view === 'about' && (
-            <div className="max-w-2xl mx-auto py-8 flex flex-col gap-6 font-mono text-xs">
+            <div className="max-w-4xl mx-auto py-8 flex flex-col gap-8 font-mono text-xs">
 
-
-              <div className="flex flex-col gap-2 border-b border-zinc-800 pb-4">
-                <h1 className="text-2xl font-bold uppercase text-white">Synkron Engine Specification</h1>
-                <span className="text-[10px] text-zinc-500">AST Differential & Reconciler logic.</span>
+              {/* Dev Notice Banner */}
+              <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[10px] font-bold text-amber-400 font-mono uppercase tracking-wider">Development Mode Notice</p>
+                  <p className="text-[10px] text-zinc-400 font-sans mt-0.5 leading-relaxed">SYNKRON is currently in active development. Some features may be incomplete, unstable, or require additional configuration. See the README for setup instructions.</p>
+                </div>
               </div>
 
-              <div className="p-5 bg-zinc-950 border border-zinc-800 rounded flex flex-col gap-5 leading-relaxed text-zinc-300 font-light text-sm font-sans">
-                <p>
-                  <strong>Synkron</strong> is a self-healing AI documentation system built specifically to combat documentation decay in agile, high-velocity environments.
-                </p>
-                <p>
-                  When code changes, traditional documentation immediately goes out of date. Synkron connects to your version control systems via secure webhook subscriptions.
-                </p>
-
-                <h3 className="font-bold text-xs text-white font-mono uppercase mt-2">[Core Engine Pipeline]</h3>
-                <ul className="flex flex-col gap-3 ml-4 list-decimal text-xs text-zinc-400 font-mono">
-                  <li>
-                    <strong className="text-zinc-200">Webhook Router</strong>: Catches GitHub push events at `/api/webhook` and filters the modified files.
-                  </li>
-                  <li>
-                    <strong className="text-zinc-200">AST Analysis</strong>: Analyzes differential changes to find exactly which functions, classes, and types were modified.
-                  </li>
-                  <li>
-                    <strong className="text-zinc-200">AI Self-Healing Pipeline</strong>: Submits the updated code, existing Markdown documentation, and changed symbols to **Ollama Cloud gemma4:31b-cloud** (with **Groq llama-3.1-8b** fallback) to reconcile the parameter changes.
-                  </li>
-                  <li>
-                    <strong className="text-zinc-200">Convex DB Persistence</strong>: Keeps connected project metadata, worker logs, and healed markdown files securely stored and synced in real-time.
-                  </li>
-                </ul>
+              <div className="flex flex-col gap-2 border-b border-zinc-800 pb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                    <Cpu className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold uppercase text-white tracking-tight">About SYNKRON Engine</h1>
+                    <p className="text-[10px] text-zinc-500 font-sans">Self-Healing AI Documentation Platform — Full Technical Specification</p>
+                  </div>
+                </div>
               </div>
+
+              {/* What is SYNKRON */}
+              <div className="p-5 bg-zinc-950 border border-zinc-800 rounded-lg flex flex-col gap-4">
+                <span className="text-[9px] font-bold text-purple-400 font-mono uppercase tracking-widest">[01] — WHAT IS SYNKRON</span>
+                <p className="text-sm text-zinc-300 font-sans leading-relaxed font-light">
+                  <strong className="text-white font-bold">SYNKRON</strong> is an open-source, AI-powered documentation engine that treats documentation as a <em>living artifact</em> — one that automatically stays in sync with your source code. Built for high-velocity engineering teams where documentation rot is a constant problem, SYNKRON connects to your GitHub repositories via secure webhooks, detects structural code changes using AST (Abstract Syntax Tree) analysis, and uses large language models to reconcile and regenerate documentation in real time.
+                </p>
+                <p className="text-xs text-zinc-400 font-sans leading-relaxed">
+                  Traditional documentation workflows break down the moment a developer renames a function, changes a parameter, or refactors a module. SYNKRON eliminates this problem entirely by making documentation self-healing — it detects the change, understands the intent, and updates the docs automatically, without any manual intervention.
+                </p>
+              </div>
+
+              {/* How It Works — Full Pipeline */}
+              <div className="p-5 bg-zinc-950 border border-zinc-800 rounded-lg flex flex-col gap-5">
+                <span className="text-[9px] font-bold text-cyan-400 font-mono uppercase tracking-widest">[02] — HOW IT WORKS: THE FULL HEALING PIPELINE</span>
+                <p className="text-xs text-zinc-400 font-sans leading-relaxed">Every heal cycle follows a deterministic 8-step pipeline from webhook receipt to documentation update:</p>
+                <div className="flex flex-col gap-3">
+                  {[
+                    { n:'01', title:'GitHub Push Event', color:'text-purple-400', desc:'A developer pushes a commit to the tracked branch. GitHub sends a POST request to your SYNKRON webhook endpoint (/api/webhook) containing the full push payload including commit SHA, author, and list of modified files.' },
+                    { n:'02', title:'HMAC-SHA256 Signature Verification', color:'text-cyan-400', desc:'Before processing anything, SYNKRON cryptographically verifies the webhook signature using your GITHUB_WEBHOOK_SECRET. Requests with invalid or missing signatures are rejected with HTTP 401. This prevents spoofed payloads from triggering heals.' },
+                    { n:'03', title:'File Filtering', color:'text-emerald-400', desc:'The payload is parsed and only TypeScript, JavaScript, JSX, TSX, MJS, and CJS files are selected for healing. Binary files, images, config files, and lock files are ignored automatically.' },
+                    { n:'04', title:'AST Snapshot Analysis', color:'text-yellow-400', desc:'Each modified file is parsed using a TypeScript-aware regex extractor that builds an AstSnapshot — a structured representation of all exported functions, classes, parameters, return types, and imports. A djb2 hash of the full source is computed for change detection.' },
+                    { n:'05', title:'Differential Comparison', color:'text-orange-400', desc:'The new AstSnapshot is compared against the previously stored snapshot. If the hash matches, healing is skipped entirely (no AI call, no quota consumed). If structural changes are detected, a human-readable diff summary is generated: "Added function: processPayment()", "Changed return type of getUser(): User → User | null", etc.' },
+                    { n:'06', title:'AI Reconciliation', color:'text-rose-400', desc:'The diff summary and existing documentation are sent to the AI pipeline. Primary: Ollama Cloud (gemma4:31b-cloud) with a hard 2000ms timeout. Fallback: Groq llama-3.1-8b-instant. The AI receives only the delta — not the full codebase — keeping prompts focused and costs minimal.' },
+                    { n:'07', title:'Documentation Update', color:'text-purple-400', desc:'The AI returns updated Markdown documentation. SYNKRON stores it in the database alongside the new AstSnapshot, updates the heal count, records the model used and duration, and logs a HealEvent with trigger type (webhook/manual/scheduled).' },
+                    { n:'08', title:'Embedding Generation', color:'text-cyan-400', desc:'If OpenAI is configured, a text-embedding-3-small vector is generated from the healed documentation and stored for semantic search. This enables natural language queries like "how does authentication work?" to return the exact relevant code block.' },
+                  ].map(step => (
+                    <div key={step.n} className="flex gap-4 p-3 bg-zinc-900/50 border border-zinc-800/50 rounded-lg">
+                      <span className={`text-[10px] font-bold font-mono ${step.color} shrink-0 w-6 mt-0.5`}>{step.n}</span>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[11px] font-bold text-white font-mono">{step.title}</span>
+                        <p className="text-[10px] text-zinc-400 font-sans leading-relaxed">{step.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tech Stack */}
+              <div className="p-5 bg-zinc-950 border border-zinc-800 rounded-lg flex flex-col gap-4">
+                <span className="text-[9px] font-bold text-emerald-400 font-mono uppercase tracking-widest">[03] — TECHNOLOGY STACK</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { layer:'Framework', tech:'Next.js 16 (App Router)', note:'All API routes run on Node.js runtime' },
+                    { layer:'Database', tech:'Neon Serverless Postgres + Drizzle ORM', note:'Falls back to in-memory store without DATABASE_URL' },
+                    { layer:'AI Primary', tech:'Groq llama-3.3-70b-versatile', note:'Fast inference, free tier available' },
+                    { layer:'AI Fallback', tech:'OpenAI gpt-4o-mini', note:'Also used for vision (UI Rater) and embeddings' },
+                    { layer:'Embeddings', tech:'OpenAI text-embedding-3-small', note:'Required for semantic search feature' },
+                    { layer:'Real-time', tech:'Convex', note:'Activity logs, webhook queue, auth' },
+                    { layer:'Auth', tech:'PBKDF2 + httpOnly session cookies', note:'100,000 iterations, SHA-256, 32-byte key' },
+                    { layer:'Sidecars', tech:'Python, Rust, C#', note:'VM engine, AST analysis, shadow branching' },
+                  ].map(row => (
+                    <div key={row.layer} className="p-3 bg-zinc-900 border border-zinc-800 rounded flex flex-col gap-0.5">
+                      <span className="text-[9px] text-zinc-500 font-mono uppercase">{row.layer}</span>
+                      <span className="text-[11px] font-bold text-white font-sans">{row.tech}</span>
+                      <span className="text-[9px] text-zinc-500 font-sans">{row.note}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* AI Models */}
+              <div className="p-5 bg-zinc-950 border border-zinc-800 rounded-lg flex flex-col gap-4">
+                <span className="text-[9px] font-bold text-yellow-400 font-mono uppercase tracking-widest">[04] — AI MODELS & CIRCUIT BREAKER</span>
+                <p className="text-[10px] text-zinc-400 font-sans leading-relaxed">SYNKRON uses a circuit-breaker pattern for AI calls. The primary model is attempted first with a hard timeout. On failure or timeout, the system immediately falls back to the secondary model — no user-visible delay.</p>
+                <div className="flex flex-col gap-2">
+                  <div className="p-3 bg-zinc-900 border border-emerald-500/20 rounded flex items-start gap-3">
+                    <span className="text-[8px] font-bold text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0 mt-0.5">PRIMARY</span>
+                    <div>
+                      <p className="text-[11px] font-bold text-white">Groq — llama-3.3-70b-versatile</p>
+                      <p className="text-[10px] text-zinc-400 font-sans">Used for documentation healing, PR descriptions, changelog generation, and security fix suggestions. Free tier available at console.groq.com.</p>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-zinc-900 border border-zinc-700/30 rounded flex items-start gap-3">
+                    <span className="text-[8px] font-bold text-zinc-400 font-mono bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 rounded shrink-0 mt-0.5">FALLBACK</span>
+                    <div>
+                      <p className="text-[11px] font-bold text-white">OpenAI — gpt-4o-mini + gpt-4o (vision)</p>
+                      <p className="text-[10px] text-zinc-400 font-sans">Fallback for text generation. gpt-4o is used exclusively for the UI Rater when screenshots are provided (vision capability required).</p>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-zinc-900 border border-blue-500/20 rounded flex items-start gap-3">
+                    <span className="text-[8px] font-bold text-blue-400 font-mono bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded shrink-0 mt-0.5">EMBEDDINGS</span>
+                    <div>
+                      <p className="text-[11px] font-bold text-white">OpenAI — text-embedding-3-small</p>
+                      <p className="text-[10px] text-zinc-400 font-sans">Generates 1536-dimension vectors for semantic search. Stored as JSON-serialized float32 arrays. Cosine similarity used for ranking.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Features */}
+              <div className="p-5 bg-zinc-950 border border-zinc-800 rounded-lg flex flex-col gap-4">
+                <span className="text-[9px] font-bold text-rose-400 font-mono uppercase tracking-widest">[05] — FULL FEATURE LIST</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    'Continuous self-healing via GitHub webhooks',
+                    'HMAC-SHA256 webhook signature validation',
+                    'AST-based structural diff detection',
+                    'AI quota system (7/week free, 50 pro, 500 enterprise)',
+                    'Device fingerprint-based rate limiting',
+                    'Semantic search with vector embeddings',
+                    'Doc health scoring (0–100) with staleness tracking',
+                    'Stale doc alerts with configurable threshold',
+                    'Auto-generated CHANGELOG.md from heal events',
+                    'UI/UX rating engine (6 dimensions, vision AI)',
+                    'Security scanner (secrets, SQL injection, XSS)',
+                    'AI-powered security fix suggestions',
+                    'Shadow branching for safe fix application (C#)',
+                    'In-browser file editor with GitHub commit',
+                    'PR description auto-generation',
+                    'Scheduled healing (cron, configurable interval)',
+                    'Team workspaces with role-based access',
+                    'Repository branch management',
+                    'Access token management (hashed, scoped)',
+                    'Session management (list, revoke per-device)',
+                    'GDPR/CCPA data export (one-click JSON)',
+                    'Email notifications (SMTP, heal/security/stale)',
+                    'GitHub OAuth + email/password auth',
+                    'Dark/light theme toggle',
+                    'Live API playground (test every endpoint)',
+                    'VM execution engine (register-based bytecode)',
+                    'Assembly conversion sidecar (Python)',
+                    'Native code analysis (Python AST engine)',
+                    'Rust JIT compiler CLI',
+                    'Doc export (HTML, Markdown ZIP, JSON)',
+                  ].map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 text-[10px] text-zinc-400 font-sans">
+                      <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
+                      {f}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Setup */}
+              <div className="p-5 bg-zinc-950 border border-zinc-800 rounded-lg flex flex-col gap-4">
+                <span className="text-[9px] font-bold text-purple-400 font-mono uppercase tracking-widest">[06] — QUICK SETUP</span>
+                <div className="flex flex-col gap-2">
+                  {[
+                    { cmd:'npm install', desc:'Install all dependencies' },
+                    { cmd:'npx convex dev', desc:'Initialize Convex auth and real-time DB' },
+                    { cmd:'npm run db:push', desc:'Sync Drizzle schema to Neon Postgres' },
+                    { cmd:'npm run dev', desc:'Start the development server on :3000' },
+                  ].map((s, i) => (
+                    <div key={i} className="flex items-center gap-3 p-2.5 bg-zinc-900 border border-zinc-800 rounded">
+                      <span className="text-[9px] text-zinc-600 font-mono w-4 shrink-0">{i+1}.</span>
+                      <code className="text-[10px] text-cyan-300 font-mono flex-1">{s.cmd}</code>
+                      <span className="text-[9px] text-zinc-500 font-sans">{s.desc}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-zinc-500 font-sans leading-relaxed">
+                  Required env vars: <code className="text-zinc-300 font-mono">DATABASE_URL</code>, <code className="text-zinc-300 font-mono">GROQ_API_KEY</code>, <code className="text-zinc-300 font-mono">GITHUB_WEBHOOK_SECRET</code>. Optional: <code className="text-zinc-300 font-mono">OPENAI_API_KEY</code> (semantic search + UI rater), <code className="text-zinc-300 font-mono">GITHUB_CLIENT_ID/SECRET</code> (OAuth).
+                </p>
+              </div>
+
             </div>
           )}
-
-
-          {/* ================= PRIVACY POLICY VIEW ================= */}
+{/* ================= PRIVACY POLICY VIEW ================= */}
           {view === 'privacy' && (
-            <div className="max-w-2xl mx-auto py-8 flex flex-col gap-6 font-mono text-xs">
+            <div className="max-w-4xl mx-auto py-8 flex flex-col gap-8 font-mono text-xs">
 
-
-              <div className="flex flex-col gap-2 border-b border-zinc-800 pb-4">
-                <h1 className="text-2xl font-bold uppercase text-white">Privacy Policy</h1>
-                <span className="text-[10px] text-zinc-500">Effective Date: May 8, 2026. Code privacy and data trust specifications.</span>
+              <div className="flex flex-col gap-2 border-b border-zinc-800 pb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-cyan-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold uppercase text-white tracking-tight">Privacy Policy</h1>
+                    <p className="text-[10px] text-zinc-500 font-sans">Effective: May 8, 2026 · SYNKRON by Sonata Interactive</p>
+                  </div>
+                </div>
               </div>
 
-              <div className="p-5 bg-zinc-950 border border-zinc-800 rounded flex flex-col gap-5 leading-relaxed text-zinc-300 font-light text-xs font-sans">
-                <p className="font-mono text-zinc-400">[01_CODE_CONFIDENTIALITY_GUARANTEE]</p>
-                <p>
-                  At Synkron, we treat your source code as highly confidential. Any source files sent to the `/api/webhook` or `/api/heal` routes are processed in-memory to execute AST analysis and documentation reconciliation.
-                </p>
-
-                <p className="font-mono text-zinc-400">[02_ZERO_DATA_RETENTION]</p>
-                <p>
-                  Your raw codebase files are never permanently saved on our servers or used to train any third-party AI models. Files are read temporarily from your connected repository, processed through Ollama or Groq, and discarded immediately after documentation updates are finalized.
-                </p>
-
-                <p className="font-mono text-zinc-400">[03_CONVEX_SECURITY]</p>
-                <p>
-                  All active repository configurations, worker transaction logs, and generated Markdown documentation stored inside the Convex Cloud Database are protected under secure TLS encryption protocols.
-                </p>
+              <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg flex items-start gap-3">
+                <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-[10px] text-zinc-400 font-sans leading-relaxed">This policy applies to all users of SYNKRON, whether using the hosted version or self-hosting. By using SYNKRON, you agree to the data practices described here. If you disagree, please do not use the service.</p>
               </div>
+
+              {[
+                {
+                  id:'01', color:'text-purple-400',
+                  title:'What Data We Collect',
+                  items:[
+                    { h:'Account Information', b:'When you register, we collect your email address, username, full name, and a PBKDF2-hashed password (100,000 iterations, SHA-256). We never store plaintext passwords. If you sign in via GitHub OAuth, we collect your GitHub username, primary verified email, and avatar URL.' },
+                    { h:'Repository Metadata', b:'When you connect a GitHub repository, we store the repository full name (owner/repo), the tracked branch, a generated webhook secret (stored in plaintext — treat it like a password), and timestamps of connection and last sync.' },
+                    { h:'Source Code (Transient)', b:'When a webhook fires or you manually trigger a heal, the source code of modified files is sent to our API. This code is processed in-memory for AST analysis and passed to the AI provider. It is NOT permanently stored in our database. Only the generated documentation (Markdown) and AST snapshot are persisted.' },
+                    { h:'Heal Events & Logs', b:'We store metadata about each heal operation: which file was healed, which AI model was used, how long it took, the trigger type (webhook/manual/scheduled), and the commit message. We do not store the raw source code in heal event logs.' },
+                    { h:'Session Data', b:'We store session tokens (random UUIDs), device info (User-Agent string), IP address, and expiration time. Sessions expire after 24 hours. You can view and revoke all sessions from your Profile page.' },
+                    { h:'AI Quota', b:'We track AI usage per device fingerprint (SHA-256 hash of IP + User-Agent + Accept-Language + optional canvas hash). This is used to enforce weekly limits. The raw IP is never stored — only the hash.' },
+                    { h:'Activity Logs (Convex)', b:'If Convex is configured, we log user actions (login, profile update, doc view) with optional IP and device info. These logs are visible to you in the Tracking view and are used for security monitoring.' },
+                  ]
+                },
+                {
+                  id:'02', color:'text-cyan-400',
+                  title:'How We Use Your Data',
+                  items:[
+                    { h:'Providing the Service', b:'Account data is used to authenticate you and associate repositories, heal events, and settings with your account. Session tokens are used to maintain your login state across requests.' },
+                    { h:'AI Processing', b:'Source code sent to /api/heal or /api/webhook is forwarded to Groq or OpenAI for documentation generation. These providers have their own privacy policies. We send only the minimum necessary context (the diff, not the full codebase).' },
+                    { h:'Security', b:'IP addresses and device info are used for rate limiting, session management, and detecting suspicious activity. We do not use this data for advertising or profiling.' },
+                    { h:'Service Improvement', b:'Aggregated, anonymized usage statistics (number of heals, models used, error rates) may be used to improve the service. No individual user data is used for this purpose.' },
+                  ]
+                },
+                {
+                  id:'03', color:'text-emerald-400',
+                  title:'Data Retention',
+                  items:[
+                    { h:'Account Data', b:'Retained until you delete your account. Deletion is permanent and immediate — all associated repositories, heal events, sessions, and doc files are cascade-deleted from the database.' },
+                    { h:'Session Tokens', b:'Automatically expire after 24 hours. Expired sessions are not actively purged but are ignored by the validation logic. You can manually revoke all sessions from your Profile.' },
+                    { h:'Heal Events & Doc Files', b:'Retained indefinitely while your account exists. Deleted when you disconnect a repository or delete your account.' },
+                    { h:'AI Quota Records', b:'Reset every Monday at 00:00 UTC. Old quota records are not deleted but are ignored once the week rolls over.' },
+                    { h:'Source Code', b:'Never persisted. Processed in-memory and discarded immediately after the heal operation completes.' },
+                  ]
+                },
+                {
+                  id:'04', color:'text-yellow-400',
+                  title:'Third-Party Services',
+                  items:[
+                    { h:'Groq', b:'Your code diffs and documentation context are sent to Groq\'s API for AI processing. Groq\'s privacy policy applies: groq.com/privacy. We use the llama-3.3-70b-versatile model.' },
+                    { h:'OpenAI', b:'Used for embeddings (text-embedding-3-small) and vision analysis (gpt-4o). OpenAI\'s privacy policy applies: openai.com/privacy. Screenshots uploaded to the UI Rater are sent to OpenAI.' },
+                    { h:'Neon (Database)', b:'Your account data, repositories, and heal history are stored in a Neon Serverless Postgres database. Neon\'s privacy policy applies: neon.tech/privacy. Data is encrypted at rest and in transit.' },
+                    { h:'Convex', b:'Activity logs and webhook queue data are stored in Convex. Convex\'s privacy policy applies: convex.dev/privacy.' },
+                    { h:'GitHub', b:'When you connect a repository, SYNKRON interacts with the GitHub API to fetch file trees and validate repositories. GitHub\'s privacy policy applies: docs.github.com/site-policy/privacy-policies.' },
+                  ]
+                },
+                {
+                  id:'05', color:'text-rose-400',
+                  title:'Your Rights (GDPR / CCPA)',
+                  items:[
+                    { h:'Right to Access', b:'You can export all your data at any time from Profile → Export Data. This generates a JSON file containing your account info, repositories, heal events, and session history.' },
+                    { h:'Right to Deletion', b:'You can permanently delete your account from Profile → Danger Zone. This immediately and irreversibly deletes all your data from our systems.' },
+                    { h:'Right to Rectification', b:'You can update your username and full name from Profile → Edit Profile at any time.' },
+                    { h:'Right to Portability', b:'The data export (JSON) is machine-readable and can be imported into other systems.' },
+                    { h:'Do Not Sell', b:'We do not sell, rent, or share your personal data with third parties for advertising or marketing purposes. Period.' },
+                    { h:'Cookies', b:'We use a single httpOnly session cookie (synkron_session) for authentication. No tracking cookies, no analytics cookies, no third-party cookies.' },
+                  ]
+                },
+                {
+                  id:'06', color:'text-orange-400',
+                  title:'Security Measures',
+                  items:[
+                    { h:'Password Hashing', b:'PBKDF2-HMAC-SHA256 with 100,000 iterations and a random 16-byte salt. Timing-safe comparison prevents timing attacks.' },
+                    { h:'Session Tokens', b:'Cryptographically random UUIDs (two concatenated, 72 hex chars). Stored as httpOnly, Secure, SameSite=Lax cookies.' },
+                    { h:'Webhook Validation', b:'HMAC-SHA256 signature verification using the Web Crypto API. Timing-safe comparison. Requests without valid signatures are rejected.' },
+                    { h:'Transport Security', b:'All API communication uses HTTPS/TLS. Database connections use SSL. Convex uses TLS for all WebSocket connections.' },
+                    { h:'Access Tokens', b:'Repository access tokens are hashed using PBKDF2 before storage. Only the first 12 characters (prefix) are stored in plaintext for display. The full token is shown only once at creation.' },
+                  ]
+                },
+              ].map(section => (
+                <div key={section.id} className="p-5 bg-zinc-950 border border-zinc-800 rounded-lg flex flex-col gap-4">
+                  <span className={`text-[9px] font-bold font-mono uppercase tracking-widest ${section.color}`}>[{section.id}] — {section.title}</span>
+                  <div className="flex flex-col gap-3">
+                    {section.items.map((item, i) => (
+                      <div key={i} className="flex flex-col gap-1">
+                        <span className="text-[11px] font-bold text-white font-sans">{item.h}</span>
+                        <p className="text-[10px] text-zinc-400 font-sans leading-relaxed">{item.b}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] text-zinc-500 font-sans leading-relaxed">
+                Questions about this policy? Open an issue on GitHub or contact us through the repository. This policy was last updated May 8, 2026 and applies to SYNKRON v1.0.0+.
+              </div>
+
             </div>
           )}
-
-
-          {/* ================= TERMS & CONDITIONS VIEW ================= */}
+{/* ================= TERMS & CONDITIONS VIEW ================= */}
           {view === 'terms' && (
-            <div className="max-w-2xl mx-auto py-8 flex flex-col gap-6 font-mono text-xs">
+            <div className="max-w-4xl mx-auto py-8 flex flex-col gap-8 font-mono text-xs">
 
-
-              <div className="flex flex-col gap-2 border-b border-zinc-800 pb-4">
-                <h1 className="text-2xl font-bold uppercase text-white">Terms of Use</h1>
-                <span className="text-[10px] text-zinc-500">Last Updated: May 8, 2026. Open source and fair-use guidelines.</span>
+              <div className="flex flex-col gap-2 border-b border-zinc-800 pb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold uppercase text-white tracking-tight">Terms &amp; Conditions</h1>
+                    <p className="text-[10px] text-zinc-500 font-sans">Last Updated: May 8, 2026 · SYNKRON by Sonata Interactive</p>
+                  </div>
+                </div>
               </div>
 
-              <div className="p-5 bg-zinc-950 border border-zinc-800 rounded flex flex-col gap-5 leading-relaxed text-zinc-300 font-light text-xs font-sans">
-                <p className="font-mono text-zinc-400">[01_MIT_LICENSE_COMPLIANCE]</p>
-                <p>
-                  Synkron is an open-source product distributed under the permissive MIT License. You are permitted to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the Software for both non-commercial and commercial purposes, provided that the copyright notice is preserved.
-                </p>
-
-                <p className="font-mono text-zinc-400">[02_API_USAGE_POLICY]</p>
-                <p>
-                  When utilizing our cloud endpoints for Ollama gemma4:31b-cloud and Groq llama-3.1-8b-instant, you agree to refrain from deploying automated scripts that spam the self-healing routes, which could result in IP-level rate limits.
-                </p>
-
-                <p className="font-mono text-zinc-400">[03_ZERO_WARRANTY_AND_LIABILITY]</p>
-                <p>
-                  The Software is provided "as is", without warranty of any kind, express or implied. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability arising from, out of, or in connection with the Software or the use of the Software.
-                </p>
+              <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg flex items-start gap-3">
+                <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-[10px] text-zinc-400 font-sans leading-relaxed">By accessing or using SYNKRON — whether the hosted version, a self-hosted instance, or the source code — you agree to be bound by these Terms. If you do not agree, do not use the software.</p>
               </div>
+
+              {[
+                {
+                  id:'01', color:'text-purple-400',
+                  title:'License & Open Source',
+                  items:[
+                    { h:'MIT License', b:'SYNKRON is distributed under the MIT License. You are free to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software for any purpose — commercial or non-commercial — provided the original copyright notice and this permission notice are included in all copies or substantial portions of the software.' },
+                    { h:'Attribution', b:'You are not required to credit Sonata Interactive in your end product, but we appreciate it. If you fork or redistribute SYNKRON, you must retain the MIT license header in the source files.' },
+                    { h:'No Trademark License', b:'The MIT License does not grant you rights to use the SYNKRON name, logo, or branding in a way that implies endorsement by Sonata Interactive. You may not use "SYNKRON" as the name of a competing product.' },
+                    { h:'Contributions', b:'By submitting a pull request or contribution to the SYNKRON repository, you agree that your contribution is licensed under the same MIT License and that you have the right to grant this license.' },
+                  ]
+                },
+                {
+                  id:'02', color:'text-cyan-400',
+                  title:'Acceptable Use',
+                  items:[
+                    { h:'Permitted Uses', b:'Using SYNKRON to document your own or your organization\'s codebase. Integrating SYNKRON into CI/CD pipelines. Self-hosting SYNKRON on your own infrastructure. Building products or services on top of SYNKRON\'s API.' },
+                    { h:'Prohibited Uses', b:'You may not use SYNKRON to process code that you do not have the legal right to access. You may not use SYNKRON to generate documentation for malicious software, exploits, or illegal content. You may not attempt to reverse-engineer, circumvent, or abuse the AI quota system.' },
+                    { h:'API Rate Limits', b:'The hosted SYNKRON service enforces weekly AI quotas: 7 calls/week (free), 50/week (pro), 500/week (enterprise). These limits exist to prevent abuse and ensure fair access. Attempting to circumvent these limits (e.g., by rotating device fingerprints) is a violation of these Terms.' },
+                    { h:'Automated Abuse', b:'You may not deploy automated scripts that spam the /api/heal, /api/webhook, or /api/security/scan endpoints. Reasonable automation (e.g., CI/CD integration) is permitted. Unreasonable automation that degrades service for other users is not.' },
+                  ]
+                },
+                {
+                  id:'03', color:'text-emerald-400',
+                  title:'AI-Generated Content',
+                  items:[
+                    { h:'No Accuracy Guarantee', b:'Documentation generated by SYNKRON\'s AI pipeline is provided as-is. The AI may make mistakes, misinterpret code intent, or generate inaccurate descriptions. You are responsible for reviewing and validating all AI-generated documentation before publishing or relying on it.' },
+                    { h:'Not Professional Advice', b:'AI-generated content from SYNKRON does not constitute legal, security, financial, or professional advice. Security scan results and fix suggestions are informational only and should be reviewed by a qualified security professional.' },
+                    { h:'Intellectual Property', b:'You retain full ownership of your source code and the documentation generated from it. SYNKRON does not claim any rights to your code or generated documentation. The AI models used (Groq, OpenAI) are subject to their respective providers\' terms regarding generated content.' },
+                    { h:'Third-Party AI Terms', b:'By using SYNKRON, you also agree to the terms of the AI providers used: Groq (groq.com/terms) and OpenAI (openai.com/terms). SYNKRON sends your code diffs to these providers for processing.' },
+                  ]
+                },
+                {
+                  id:'04', color:'text-yellow-400',
+                  title:'GitHub Integration',
+                  items:[
+                    { h:'Webhook Security', b:'You are responsible for keeping your GITHUB_WEBHOOK_SECRET secure. If your secret is compromised, rotate it immediately from the repository settings page. SYNKRON is not responsible for unauthorized webhook deliveries resulting from a leaked secret.' },
+                    { h:'Repository Access', b:'SYNKRON only accesses repositories you explicitly connect. We do not scan, index, or access any repository you have not connected. File tree fetching uses the GitHub API with your provided Personal Access Token or anonymously for public repos.' },
+                    { h:'GitHub API Rate Limits', b:'Unauthenticated GitHub API calls are limited to 60 requests/hour. Authenticated calls (with a PAT) are limited to 5,000/hour. SYNKRON proxies GitHub API calls server-side to protect your token. Excessive use may result in temporary GitHub API rate limiting.' },
+                    { h:'GitHub Terms', b:'Your use of GitHub features through SYNKRON is also subject to GitHub\'s Terms of Service (docs.github.com/site-policy/github-terms/github-terms-of-service).' },
+                  ]
+                },
+                {
+                  id:'05', color:'text-rose-400',
+                  title:'Disclaimers & Liability',
+                  items:[
+                    { h:'No Warranty', b:'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.' },
+                    { h:'Limitation of Liability', b:'IN NO EVENT SHALL SONATA INTERACTIVE, THE AUTHORS, OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.' },
+                    { h:'Development Status', b:'SYNKRON is currently in active development. Features may be incomplete, change without notice, or be removed entirely. The API surface is not yet stable. Do not use SYNKRON as the sole documentation system for mission-critical production systems without maintaining independent backups.' },
+                    { h:'Data Loss', b:'While we take reasonable precautions, we cannot guarantee against data loss. You are responsible for maintaining backups of your documentation. SYNKRON\'s heal events and doc files are stored in your configured database — if the database is lost, the data is lost.' },
+                    { h:'Downtime', b:'The hosted SYNKRON service may experience downtime for maintenance, updates, or unexpected failures. We do not guarantee any specific uptime SLA for the free tier.' },
+                  ]
+                },
+                {
+                  id:'06', color:'text-orange-400',
+                  title:'Account & Termination',
+                  items:[
+                    { h:'Account Responsibility', b:'You are responsible for all activity that occurs under your account. Keep your password and session tokens secure. Log out of shared devices. Report any unauthorized access immediately.' },
+                    { h:'Account Termination by You', b:'You may delete your account at any time from Profile → Danger Zone. Deletion is immediate and permanent. All your data is deleted from our systems within the same request.' },
+                    { h:'Account Termination by Us', b:'We reserve the right to suspend or terminate accounts that violate these Terms, engage in abuse, or pose a security risk to other users. We will make reasonable efforts to notify you before termination unless the violation is severe.' },
+                    { h:'Effect of Termination', b:'Upon termination, your right to use the service ceases immediately. All your data is deleted. Webhook secrets are invalidated. Any connected GitHub webhooks will continue to fire but will receive 401 responses.' },
+                  ]
+                },
+                {
+                  id:'07', color:'text-blue-400',
+                  title:'Changes to These Terms',
+                  items:[
+                    { h:'Updates', b:'We may update these Terms from time to time. The "Last Updated" date at the top of this page will reflect the most recent revision. Continued use of SYNKRON after changes constitutes acceptance of the new Terms.' },
+                    { h:'Notification', b:'For significant changes, we will make reasonable efforts to notify users (e.g., via a notice in the dashboard). However, it is your responsibility to review these Terms periodically.' },
+                    { h:'Governing Law', b:'These Terms are governed by the laws of the jurisdiction in which Sonata Interactive operates, without regard to conflict of law principles. Any disputes shall be resolved through good-faith negotiation before resorting to formal legal proceedings.' },
+                  ]
+                },
+              ].map(section => (
+                <div key={section.id} className="p-5 bg-zinc-950 border border-zinc-800 rounded-lg flex flex-col gap-4">
+                  <span className={`text-[9px] font-bold font-mono uppercase tracking-widest ${section.color}`}>[{section.id}] — {section.title}</span>
+                  <div className="flex flex-col gap-3">
+                    {section.items.map((item, i) => (
+                      <div key={i} className="flex flex-col gap-1">
+                        <span className="text-[11px] font-bold text-white font-sans">{item.h}</span>
+                        <p className="text-[10px] text-zinc-400 font-sans leading-relaxed">{item.b}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] text-zinc-500 font-sans leading-relaxed">
+                These Terms were last updated May 8, 2026 and apply to SYNKRON v1.0.0+. For questions, open an issue on the GitHub repository. By using SYNKRON, you acknowledge that you have read, understood, and agree to be bound by these Terms.
+              </div>
+
             </div>
           )}
 

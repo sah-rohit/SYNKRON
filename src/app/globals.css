@@ -340,3 +340,24 @@ body {
 .bento-transition {
   transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ─── Hide Convex "N" branding badge ──────────────────────────────────────── */
+/* The ConvexAuthProvider injects a fixed bottom-left badge in development.    */
+/* We suppress it entirely — SYNKRON has its own branding.                     */
+[data-convex-panel],
+[data-convex-badge],
+.__convex-panel,
+.__convex-badge,
+div[style*="position: fixed"][style*="bottom"][style*="left"][style*="z-index: 9999"],
+div[style*="position:fixed"][style*="bottom"][style*="left"][style*="z-index:9999"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+/* ─── SYNKRON Custom Scrollbar ────────────────────────────────────────────── */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.25); border-radius: 9999px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(168,85,247,0.5); }
