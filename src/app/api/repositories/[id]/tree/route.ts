@@ -41,11 +41,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       'Accept': 'application/vnd.github+json',
       'User-Agent': 'SYNKRON-App',
     };
-    // Use auth token if available to prevent rate limits
-    if (process.env.GITHUB_CLIENT_SECRET) {
-       // Basic auth for server-to-server rate limit increase (optional)
-       // Or if there's a personal access token we could use it here.
-    }
+
+    // Use PAT from request header, then env var — increases rate limit from 60 to 5000/hr
+    const token =
+      req.headers.get('x-github-token') ||
+      process.env.GITHUB_TOKEN ||
+      '';
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
     let targetBranch = branch || 'main';
     let res = await fetch(`https://api.github.com/repos/${repoFullName}/git/trees/${targetBranch}?recursive=1`, { headers });

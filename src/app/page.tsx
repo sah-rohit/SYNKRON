@@ -139,7 +139,11 @@ function HealHistoryCard({ triggerAlert }: { triggerAlert: (type: 'success' | 'w
           setRepoId(id);
         }
       }
-      const url = id ? `/api/repositories/${id}/heals` : '/api/repositories/demo/heals';
+      const url = id ? `/api/repositories/${id}/heals` : null;
+      if (!url) {
+        triggerAlert('info', 'Heal History', 'Connect a repository to view heal history.');
+        return;
+      }
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) setHeals(data.heals);

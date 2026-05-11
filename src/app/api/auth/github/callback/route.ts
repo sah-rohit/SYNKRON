@@ -118,14 +118,8 @@ export async function GET(req: NextRequest) {
       sessionToken = memStore.memCreateSession(userId, 'GitHub OAuth');
     }
 
-    // Build the redirect response with user data in URL params for client-side pickup
-    const redirectUrl = new URL('/', req.url);
-    redirectUrl.searchParams.set('auth_success', 'true');
-    redirectUrl.searchParams.set('gh_user', username);
-    redirectUrl.searchParams.set('gh_name', fullName);
-    redirectUrl.searchParams.set('gh_email', primaryEmail);
-    redirectUrl.searchParams.set('gh_avatar', ghUser.avatar_url || '');
-    redirectUrl.searchParams.set('gh_id', userId);
+    // Redirect to home — session cookie is set, client will call /api/auth/me to get user data
+    const redirectUrl = new URL('/?auth_success=true', req.url);
 
     const response = NextResponse.redirect(redirectUrl);
     setSessionCookie(response, sessionToken);

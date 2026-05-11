@@ -90,6 +90,13 @@ export async function POST(req: NextRequest) {
     console.error('[Webhook] Failed to persist log:', err)
   );
 
+  // Trigger healing for relevant files (async, non-blocking)
+  if (relevantFiles.length > 0) {
+    triggerHealing(parsed.repoFullName, parsed.branch, relevantFiles).catch((err) =>
+      console.error('[Webhook] Failed to trigger healing:', err)
+    );
+  }
+
   return NextResponse.json({
     success: true,
     message: 'GitHub webhook received and queued for processing',
@@ -101,6 +108,7 @@ export async function POST(req: NextRequest) {
       author: parsed.authorUsername,
       modifiedFiles: parsed.modifiedFiles,
       relevantFiles,
+      healingTriggered: relevantFiles.length > 0,
       timestamp: new Date().toISOString(),
     },
   });
@@ -129,5 +137,96 @@ async function persistWebhookLog(
   } catch (err: any) {
     // DB not configured — log and continue
     console.warn('[Webhook] DB persist skipped:', err.message);
+  }
+}
+
+/**
+ * Trigger the healing pipeline for modified files.
+ * Looks up stored doc files in the DB and re-heals them.
+ * Silently skips if DB is not configured.
+ */
+async function triggerHealing(
+  repoFullName: string,
+  branch: string,
+  relevantFiles: string[]
+): Promise<void> {
+  if (!process.env.DATABASE_URL) return;
+
+  try {
+    const { getDb, schema } = await import('@/lib/db');
+    const { eq, and, inArray, sql } = await import('drizzle-orm');
+    const { healDocumentation } = await import('@/lib/ai/healer');
+    const db = getDb();
+
+    // Find the repository
+    const [repo] = await db
+      .select({ id: schema.repositories.id })
+      .from(schema.repositories)
+      .where(eq(schema.repositories.fullName, repoFullName))
+      .limit(1);
+
+    if (!repo) {
+      console.warn(`[Webhook] Repository ${repoFullName} not found in DB — skipping heal`);
+      return;
+    }
+
+    // Find stored doc files matching the modified paths
+    const docFiles = await db
+      .select()
+      .from(schema.docFiles)
+      .where(
+        and(
+          eq(schema.docFiles.repositoryId, repo.id),
+          inArray(schema.docFiles.filePath, relevantFiles)
+        )
+      );
+
+    if (!docFiles.length) {
+      console.info(`[Webhook] No stored doc files found for modified paths in ${repoFullName}`);
+      return;
+    }
+
+    // Heal each doc file
+    for (const doc of docFiles) {
+      try {
+        const result = await healDocumentation({
+          filename: doc.filePath,
+          code: doc.rawCode,
+          existingMarkdown: doc.healedMarkdown,
+        });
+
+        if (result.success) {
+          await db.update(schema.docFiles)
+            .set({
+              healedMarkdown: result.markdown,
+              lastHealedAt: new Date(),
+              lastHealedBy: result.modelUsed,
+              healCount: sql`${schema.docFiles.healCount} + 1`,
+              updatedAt: new Date(),
+            })
+            .where(eq(schema.docFiles.id, doc.id));
+
+          await db.insert(schema.healEvents).values({
+            repositoryId: repo.id,
+            docFileId: doc.id,
+            triggerType: 'webhook',
+            modelUsed: result.modelUsed,
+            status: 'success',
+            durationMs: result.durationMs,
+          });
+        }
+      } catch (err: any) {
+        console.error(`[Webhook] Heal failed for ${doc.filePath}:`, err.message);
+        await db.insert(schema.healEvents).values({
+          repositoryId: repo.id,
+          docFileId: doc.id,
+          triggerType: 'webhook',
+          status: 'failed',
+          errorMessage: err.message,
+        }).catch(() => {});
+      }
+    }
+  } catch (err: any) {
+    console.error('[Webhook] triggerHealing error:', err.message);
   }
 }

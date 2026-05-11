@@ -16,8 +16,13 @@ const OLLAMA_API_KEY = process.env.OLLAMA_CLOUD_KEY;
 
 export interface HealRequest {
   filename: string;
-  astDiffContext: string; // Passes only the Delta, not full file
+  /** Full source code of the file being healed */
+  code?: string;
+  /** Pre-formatted AST diff context string (takes priority over code) */
+  astDiffContext?: string;
   existingMarkdown: string;
+  /** Human-readable change summary from diffSnapshots */
+  changeSummary?: string[];
 }
 
 export interface HealResult {
@@ -114,13 +119,28 @@ export async function healDocumentation(req: HealRequest): Promise<HealResult> {
 }
 
 function buildPrompt(req: HealRequest): string {
+  // Build the delta context: prefer explicit astDiffContext, then changeSummary, then full code
+  let deltaContext: string;
+  if (req.astDiffContext) {
+    deltaContext = req.astDiffContext;
+  } else if (req.changeSummary?.length) {
+    deltaContext = req.changeSummary.map((s) => `- ${s}`).join('\n');
+    if (req.code) {
+      deltaContext += `\n\n**Full source for context:**\n\`\`\`\n${req.code.slice(0, 8000)}\n\`\`\``;
+    }
+  } else if (req.code) {
+    deltaContext = `**Full source (no previous snapshot available):**\n\`\`\`\n${req.code.slice(0, 8000)}\n\`\`\``;
+  } else {
+    deltaContext = '(No code context provided)';
+  }
+
   return `You are the SYNKRON self-healing engine.
 Focus exclusively on the DELTA (AST-diff) provided below to update the documentation.
 
 **File Target:** \`${req.filename}\`
 
 **AST-Diff Context (The Delta):**
-${req.astDiffContext}
+${deltaContext}
 
 **Current Context (Existing Markdown):**
 ${req.existingMarkdown || '(None)'}

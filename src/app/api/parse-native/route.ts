@@ -13,10 +13,11 @@ export async function POST(req: NextRequest) {
 
     const ext = filename ? path.extname(filename) : '.py';
     const scriptPath = path.join(process.cwd(), 'src', 'lib', 'engine', 'analyzer.py');
+    const pythonBin = process.platform === 'win32' ? 'python' : 'python3';
 
     // Run python script using native spawn and standard input stream
     const result = await new Promise<string>((resolve, reject) => {
-      const py = spawn('python', [scriptPath, '-', ext]);
+      const py = spawn(pythonBin, [scriptPath, '-', ext]);
       let stdout = '';
       let stderr = '';
 
