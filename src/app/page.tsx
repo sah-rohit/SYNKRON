@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { gsap } from 'gsap';
 import UIRaterView from '@/components/UIRaterView';
 import SecurityView from '@/components/SecurityView';
+import GitHubDeepView from '@/components/GitHubDeepView';
 import RepositoriesView from '@/components/RepositoriesView';
 import FileEditorView from '@/components/FileEditorView';
 import TrackingRecordView from '@/components/TrackingRecordView';
@@ -28,6 +29,7 @@ import {
   Cpu,
   User,
   Heart,
+  Star,
   FileCode,
   Zap,
   Check,
@@ -109,7 +111,7 @@ interface SessionLog {
   isCurrent: boolean;
 }
 
-type ViewType = 'landing' | 'dashboard' | 'about' | 'privacy' | 'terms' | 'pricing' | 'login' | 'signup' | 'ui-rater' | 'security' | 'repositories' | 'editor' | 'profile' | 'teams' | 'changelog' | 'guide' | 'engine';
+type ViewType = 'landing' | 'dashboard' | 'about' | 'privacy' | 'terms' | 'pricing' | 'login' | 'signup' | 'ui-rater' | 'security' | 'repositories' | 'editor' | 'profile' | 'teams' | 'changelog' | 'guide' | 'engine' | 'github';
 
 interface HealRecord {
   id: string;
@@ -1170,6 +1172,34 @@ Establishes connection pool with the PostgreSQL server.
   return (
     <div className="flex flex-col min-h-screen bg-[#09090b] text-zinc-100 font-mono relative antialiased selection:bg-purple-500/20">
 
+      {/* ================= REPOSITORY TOP RIBBON ================= */}
+      <div className="w-full bg-gradient-to-r from-[#120a24] via-[#09090b] to-[#120a24] border-b border-purple-500/20 py-2 px-4 text-center font-mono relative z-50 flex items-center justify-center">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-[10px] text-zinc-300 font-bold tracking-wider relative z-10">
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+            <span className="uppercase text-zinc-400">Source Available</span>
+          </div>
+          <div className="hidden sm:block w-1 h-1 bg-zinc-800 rounded-full"></div>
+          <a 
+            href="https://github.com/sah-rohit/SYNKRON" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="group flex items-center gap-2 text-white hover:text-purple-400 transition-all duration-300 uppercase border border-dashed border-zinc-800 hover:border-purple-500/40 px-3 py-0.5 bg-[#0c0c0e]"
+          >
+            <Github className="w-3 h-3 text-purple-400 group-hover:scale-110 transition-transform" />
+            <span>github.com/sah-rohit/SYNKRON</span>
+            <ExternalLink className="w-2.5 h-2.5 text-zinc-600 group-hover:text-purple-400" />
+          </a>
+          <div className="hidden sm:block w-1 h-1 bg-zinc-800 rounded-full"></div>
+          <button 
+            onClick={() => navigateTo('github')}
+            className="text-purple-400 hover:text-purple-300 hover:underline flex items-center gap-1 cursor-pointer uppercase tracking-widest text-[9px]"
+          >
+            <span>[View Platform Metrics]</span>
+          </button>
+        </div>
+      </div>
+
       {/* ================= START UP INTRO LOADING ANIMATION ================= */}
       {isIntroLoading && (
         <div className="intro-screen fixed inset-0 z-50 bg-[#09090b] flex flex-col items-center justify-center p-6 select-none border-b border-zinc-800">
@@ -1271,6 +1301,7 @@ Establishes connection pool with the PostgreSQL server.
             <button onClick={() => navigateTo('engine')} className={`hover:text-zinc-100 transition-colors ${view === 'engine' ? 'text-purple-400 border-b border-purple-500/30 pb-0.5' : 'text-emerald-500/80'}`}>[SYSTEM_ENGINE]</button>
             <button onClick={() => navigateTo('ui-rater')} className={`hover:text-white transition-colors ${view === 'ui-rater' ? 'text-white' : ''}`}>[ui-rater]</button>
             <button onClick={() => navigateTo('pricing')} className={`hover:text-white transition-colors ${view === 'pricing' ? 'text-white' : ''}`}>[pricing]</button>
+            <button onClick={() => navigateTo('github')} className={`hover:text-purple-300 hover:border-purple-400/50 transition-all border border-transparent px-1.5 py-0.5 ${view === 'github' ? 'text-purple-400 border-purple-500/40 bg-purple-500/5' : ''}`}>[repository]</button>
           </nav>
 
           {/* Right Action Widgets */}
@@ -1345,6 +1376,37 @@ Establishes connection pool with the PostgreSQL server.
                     Connect Repository
                   </button>
                 </div>
+
+                {/* ================= REPOSITORY QUICK PROMO SECTION ================= */}
+                <div className="mt-4 w-full max-w-lg p-4 bg-zinc-950 border border-purple-500/15 rounded flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-600/10 border border-purple-500/20 rounded">
+                      <Github className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <div className="text-left flex flex-col font-mono">
+                      <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Main Codebase</span>
+                      <span className="text-[11px] text-white font-bold tracking-tight">sah-rohit/SYNKRON</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 font-mono">
+                    <button 
+                      onClick={() => navigateTo('github')}
+                      className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 text-[9px] hover:bg-zinc-850 text-zinc-300 hover:text-white transition-all font-extrabold uppercase tracking-wider"
+                    >
+                      View Specs
+                    </button>
+                    <a 
+                      href="https://github.com/sah-rohit/SYNKRON" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[9px] transition-all font-extrabold uppercase tracking-wider flex items-center gap-1"
+                    >
+                      <span>Star</span>
+                      <Star className="w-2.5 h-2.5 fill-white" />
+                    </a>
+                  </div>
+                </div>
+
               </div>
 
               {/* Dev Dense Cards */}
@@ -3280,6 +3342,13 @@ Establishes connection pool with the PostgreSQL server.
                 </p>
               </div>
               <EngineView />
+            </div>
+          )}
+
+          {/* ================= GITHUB DEEP VIEW PAGE ================= */}
+          {view === 'github' && (
+            <div className="flex flex-col gap-4 py-4 animate-in slide-in-from-bottom-8 duration-500 max-w-7xl mx-auto w-full">
+              <GitHubDeepView triggerAlert={triggerAlert} />
             </div>
           )}
 
