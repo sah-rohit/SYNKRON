@@ -1170,30 +1170,46 @@ Establishes connection pool with the PostgreSQL server.
   }, [apiSearch]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#09090b] text-zinc-100 font-mono relative antialiased selection:bg-purple-500/20">
+    <div 
+      className="flex flex-col min-h-screen text-zinc-100 font-mono relative antialiased selection:bg-purple-500/20"
+      style={{ backgroundColor: theme === 'light' ? '#fdfcff' : '#09090b' }}
+    >
+      {/* ================= LIVE AURORA MESH BACKGROUND ================= */}
+      <div className="aurora-container">
+        <div className="aurora-blob aurora-1"></div>
+        <div className="aurora-blob aurora-2"></div>
+        <div className="aurora-blob aurora-3"></div>
+      </div>
 
       {/* ================= REPOSITORY TOP RIBBON ================= */}
-      <div className="w-full bg-gradient-to-r from-[#120a24] via-[#09090b] to-[#120a24] border-b border-purple-500/20 py-2 px-4 text-center font-mono relative z-50 flex items-center justify-center">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-[10px] text-zinc-300 font-bold tracking-wider relative z-10">
+      <div 
+        className="w-full border-b border-purple-500/20 py-2 px-4 text-center font-mono relative z-50 flex items-center justify-center"
+        style={{ 
+          background: theme === 'light' 
+            ? 'linear-gradient(to right, #d8b4fe, #faf5ff, #d8b4fe)' 
+            : 'linear-gradient(to right, #120a24, #09090b, #120a24)' 
+        }}
+      >
+        <div className={`w-full flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-[10px] font-bold tracking-wider relative z-10 ${theme === 'light' ? 'text-purple-900' : 'text-zinc-300'}`}>
           <div className="flex items-center gap-2">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
-            <span className="uppercase text-zinc-400">Source Available</span>
+            <span className={`uppercase ${theme === 'light' ? 'text-purple-800' : 'text-zinc-400'}`}>Source Available</span>
           </div>
-          <div className="hidden sm:block w-1 h-1 bg-zinc-800 rounded-full"></div>
+          <div className={`hidden sm:block w-1 h-1 rounded-full ${theme === 'light' ? 'bg-purple-300' : 'bg-zinc-800'}`}></div>
           <a 
             href="https://github.com/sah-rohit/SYNKRON" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="group flex items-center gap-2 text-white hover:text-purple-400 transition-all duration-300 uppercase border border-dashed border-zinc-800 hover:border-purple-500/40 px-3 py-0.5 bg-[#0c0c0e]"
+            className={`group flex items-center gap-2 transition-all duration-300 uppercase border border-dashed hover:border-purple-500/40 px-3 py-0.5 ${theme === 'light' ? 'bg-white text-purple-900 border-purple-300' : 'bg-[#0c0c0e] text-white border-zinc-800'}`}
           >
-            <Github className="w-3 h-3 text-purple-400 group-hover:scale-110 transition-transform" />
+            <Github className={`w-3 h-3 group-hover:scale-110 transition-transform ${theme === 'light' ? 'text-purple-600' : 'text-purple-400'}`} />
             <span>github.com/sah-rohit/SYNKRON</span>
-            <ExternalLink className="w-2.5 h-2.5 text-zinc-600 group-hover:text-purple-400" />
+            <ExternalLink className={`w-2.5 h-2.5 ${theme === 'light' ? 'text-purple-500' : 'text-zinc-600'} group-hover:text-purple-400`} />
           </a>
-          <div className="hidden sm:block w-1 h-1 bg-zinc-800 rounded-full"></div>
+          <div className={`hidden sm:block w-1 h-1 rounded-full ${theme === 'light' ? 'bg-purple-300' : 'bg-zinc-800'}`}></div>
           <button 
             onClick={() => navigateTo('github')}
-            className="text-purple-400 hover:text-purple-300 hover:underline flex items-center gap-1 cursor-pointer uppercase tracking-widest text-[9px]"
+            className={`hover:opacity-80 hover:underline flex items-center gap-1 cursor-pointer uppercase tracking-widest text-[9px] ${theme === 'light' ? 'text-purple-700' : 'text-purple-400'}`}
           >
             <span>[View Platform Metrics]</span>
           </button>
@@ -1273,8 +1289,15 @@ Establishes connection pool with the PostgreSQL server.
       </div>
 
       {/* ================= FLOATING NAV PILL ================= */}
-      <div className="w-full sticky top-0 z-40 px-4 pointer-events-none">
-        <header className="pointer-events-auto flex items-center justify-between px-6 py-3 border-b border-zinc-800 bg-[#09090b]/90 backdrop-blur-md max-w-7xl mx-auto mt-4 rounded-lg">
+      <div className="w-full sticky top-0 z-40 pointer-events-none">
+        <header 
+          className="pointer-events-auto flex items-center justify-between px-6 md:px-12 py-3 border-b border-zinc-800 backdrop-blur-md w-full"
+          style={{ 
+            background: theme === 'light' 
+              ? 'linear-gradient(to right, rgba(245, 235, 255, 0.85), rgba(255, 255, 255, 0.9), rgba(245, 235, 255, 0.85))' 
+              : 'linear-gradient(to right, rgba(20, 10, 40, 0.85), rgba(9, 9, 11, 0.9), rgba(20, 10, 40, 0.85))'
+          }}
+        >
           <div className="flex items-center gap-3">
             {history.length > 1 && view !== 'landing' && (
               <button

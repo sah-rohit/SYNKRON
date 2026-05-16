@@ -361,3 +361,140 @@ div[style*="position:fixed"][style*="bottom"][style*="left"][style*="z-index:999
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.25); border-radius: 9999px; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(168,85,247,0.5); }
+
+/* ─── Top Ribbon Light/Dark Theme Support ───────────────────────────────── */
+.github-ribbon {
+  background: linear-gradient(to right, #120a24, #0a0a0c, #120a24);
+}
+.theme-light .github-ribbon {
+  background: linear-gradient(to right, #e9d5ff, #f3e8ff, #e9d5ff) !important;
+}
+
+.github-ribbon-text {
+  color: #d4d4d8;
+}
+.theme-light .github-ribbon-text {
+  color: #581c87 !important;
+}
+
+.github-ribbon-subtext {
+  color: #a1a1aa;
+}
+.theme-light .github-ribbon-subtext {
+  color: #6b21a8 !important;
+}
+
+.github-ribbon-dot {
+  background-color: #27272a;
+}
+.theme-light .github-ribbon-dot {
+  background-color: #d8b4fe !important;
+}
+
+.github-ribbon-link {
+  background-color: #0c0c0e;
+  color: #ffffff;
+  border-color: #27272a;
+}
+.theme-light .github-ribbon-link {
+  background-color: #ffffff !important;
+  color: #4c1d95 !important;
+  border-color: #d8b4fe !important;
+}
+
+.github-ribbon-link-icon {
+  color: #a855f7;
+}
+.theme-light .github-ribbon-link-icon {
+  color: #9333ea !important;
+}
+
+.github-ribbon-metrics {
+  color: #a855f7;
+}
+.theme-light .github-ribbon-metrics {
+  color: #7e22ce !important;
+}
+
+/* ─── Premium Live Animated Mesh Gradient / Aurora Background ───────────── */
+@keyframes aurora-1 {
+  0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  33% { transform: translate3d(15vw, 10vh, 0) scale(1.05) rotate(5deg); }
+  66% { transform: translate3d(-10vw, 20vh, 0) scale(0.95) rotate(-5deg); }
+  100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+}
+
+@keyframes aurora-2 {
+  0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  33% { transform: translate3d(-15vw, -10vh, 0) scale(1.1) rotate(-5deg); }
+  66% { transform: translate3d(10vw, -15vh, 0) scale(0.9) rotate(5deg); }
+  100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+}
+
+@keyframes aurora-3 {
+  0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  33% { transform: translate3d(10vw, -20vh, 0) scale(0.95) rotate(5deg); }
+  66% { transform: translate3d(-10vw, 15vh, 0) scale(1.05) rotate(-5deg); }
+  100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+}
+
+.aurora-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.5;
+  will-change: transform, opacity;
+  mix-blend-mode: screen;
+}
+
+.theme-light .aurora-blob {
+  opacity: 0.6;
+  mix-blend-mode: multiply;
+}
+
+.aurora-1 {
+  top: -20%; left: -10%;
+  width: 50vw; height: 50vw;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, rgba(168, 85, 247, 0) 70%);
+  animation: aurora-1 25s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+
+.theme-light .aurora-1 {
+  background: radial-gradient(circle, rgba(216, 180, 254, 0.7) 0%, rgba(216, 180, 254, 0) 70%);
+}
+
+.aurora-2 {
+  bottom: -20%; right: -10%;
+  width: 60vw; height: 60vw;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(139, 92, 246, 0) 70%);
+  animation: aurora-2 30s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate-reverse;
+}
+
+.theme-light .aurora-2 {
+  background: radial-gradient(circle, rgba(233, 213, 255, 0.7) 0%, rgba(233, 213, 255, 0) 70%);
+}
+
+.aurora-3 {
+  top: 20%; left: 30%;
+  width: 45vw; height: 45vw;
+  background: radial-gradient(circle, rgba(192, 132, 252, 0.25) 0%, rgba(192, 132, 252, 0) 70%);
+  animation: aurora-3 28s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+
+.theme-light .aurora-3 {
+  background: radial-gradient(circle, rgba(243, 232, 255, 0.8) 0%, rgba(243, 232, 255, 0) 70%);
+}
+
+@media (max-width: 768px) {
+  .aurora-blob {
+    filter: blur(60px);
+  }
+}
